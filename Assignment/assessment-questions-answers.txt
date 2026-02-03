@@ -1,0 +1,898 @@
+FILE SYSTEM OPERATIONS IN NODE.JS - ASSESSMENT QUESTIONS ANSWERS
+================================================================
+
+1. What is the difference between synchronous and asynchronous file operations?
+-----------------------------------------------------------------------------------
+
+SYNCHRONOUS FILE OPERATIONS:
+- Block the execution of code until the operation completes
+- The program waits for the file operation to finish before moving to the next line
+- Easier to write and understand (sequential flow)
+- Can cause performance issues in applications, especially servers
+- Use "Sync" methods like fs.readFileSync(), fs.writeFileSync()
+- Better for simple scripts or initialization code
+
+Example:
+```javascript
+const fs = require('fs');
+const data = fs.readFileSync('file.txt', 'utf8'); // Blocks here
+console.log(data);
+console.log('This executes after file is read');
+```
+
+ASYNCHRONOUS FILE OPERATIONS:
+- Non-blocking - allows code to continue executing while operation is in progress
+- Uses callbacks, promises, or async/await for handling results
+- Better performance in production environments
+- Prevents blocking the event loop in Node.js
+- Use methods like fs.readFile(), fs.writeFile(), or fs.promises
+- Recommended for production applications and servers
+
+Example:
+```javascript
+const fs = require('fs');
+fs.readFile('file.txt', 'utf8', (err, data) => {
+    if (err) throw err;
+    console.log(data);
+});
+console.log('This executes immediately, before file is read');
+```
+
+KEY DIFFERENCES:
+- Performance: Async is non-blocking and more efficient for I/O operations
+- Execution: Sync blocks until complete; Async continues immediately
+- Use case: Sync for simple scripts; Async for servers and production apps
+- Error handling: Sync uses try-catch; Async uses callbacks/promises
+
+
+2. When should you use file streams instead of reading the entire file?
+------------------------------------------------------------------------
+
+USE FILE STREAMS WHEN:
+
+1. Working with LARGE FILES:
+   - Files that are too large to fit in memory
+   - Prevents memory overflow and crashes
+   - Example: Processing multi-GB log files, video files, database dumps
+
+2. MEMORY OPTIMIZATION:
+   - When you need to keep memory usage low
+   - Streams process data in chunks (typically 64KB by default)
+   - Only a small portion of the file is in memory at any time
+
+3. REAL-TIME PROCESSING:
+   - When you need to start processing data before the entire file is read
+   - Example: Parsing CSV files row by row, processing log entries as they come
+
+4. PIPING DATA:
+   - When transferring data from one source to another
+   - Example: Reading from a file and writing to another, HTTP responses
+
+5. NETWORK TRANSFERS:
+   - Uploading or downloading large files
+   - Allows progress tracking and better resource management
+
+6. BETTER PERFORMANCE:
+   - Faster start time (no waiting for entire file to load)
+   - Parallel processing of data chunks
+
+EXAMPLE - Reading entire file (BAD for large files):
+```javascript
+const fs = require('fs');
+const data = fs.readFileSync('large-file.txt', 'utf8'); // Loads entire file into memory
+console.log(data.length);
+```
+
+EXAMPLE - Using streams (GOOD for large files):
+```javascript
+const fs = require('fs');
+const readStream = fs.createReadStream('large-file.txt', {
+    encoding: 'utf8',
+    highWaterMark: 64 * 1024 // 64KB chunks
+});
+
+readStream.on('data', (chunk) => {
+    console.log(`Received ${chunk.length} bytes`);
+    // Process chunk
+});
+
+readStream.on('end', () => {
+    console.log('Finished reading file');
+});
+```
+
+WHEN NOT TO USE STREAMS:
+- Small files that easily fit in memory
+- When you need the entire file content at once
+- Simple one-time read operations
+
+
+3. Explain the purpose of the 'utf8' encoding parameter in file operations.
+---------------------------------------------------------------------------
+
+PURPOSE OF 'utf8' ENCODING PARAMETER:
+
+1. TEXT ENCODING:
+   - Specifies how to interpret the binary data in the file
+   - Converts raw bytes into readable text characters
+   - UTF-8 is the most common text encoding standard
+
+2. AUTOMATIC CONVERSION:
+   - Without encoding: Returns a Buffer object (binary data)
+   - With 'utf8': Returns a String object (readable text)
+
+3. CHARACTER SUPPORT:
+   - UTF-8 supports all Unicode characters
+   - Includes ASCII, special characters, emojis, international characters
+   - Variable-length encoding (1-4 bytes per character)
+
+EXAMPLES:
+
+Without encoding (returns Buffer):
+```javascript
+const fs = require('fs');
+const data = fs.readFileSync('file.txt');
+console.log(data); // <Buffer 48 65 6c 6c 6f>
+console.log(typeof data); // 'object' (Buffer)
+```
+
+With 'utf8' encoding (returns String):
+```javascript
+const fs = require('fs');
+const data = fs.readFileSync('file.txt', 'utf8');
+console.log(data); // 'Hello'
+console.log(typeof data); // 'string'
+```
+
+WHEN TO USE 'utf8':
+- Reading text files (.txt, .json, .html, .css, .js, etc.)
+- When you need string data for processing
+- Working with human-readable content
+
+WHEN NOT TO USE 'utf8' (omit encoding):
+- Binary files (images, videos, PDFs, executables)
+- When you need the raw buffer data
+- When copying files without modification
+
+OTHER ENCODING OPTIONS:
+- 'ascii' - For ASCII-only text (7-bit characters)
+- 'base64' - For base64-encoded data
+- 'hex' - For hexadecimal representation
+- 'binary' - Deprecated, use Buffer instead
+- null or undefined - Returns Buffer (for binary data)
+
+
+4. What are the common error codes in file system operations and what do they mean?
+------------------------------------------------------------------------------------
+
+COMMON FILE SYSTEM ERROR CODES:
+
+1. ENOENT - Error NO ENTry
+   - Meaning: File or directory does not exist
+   - Common causes: Wrong path, file was deleted, typo in filename
+   - Solution: Check path, verify file exists, create file if needed
+   Example: Trying to read a non-existent file
+
+2. EACCES - Error ACCESs denied
+   - Meaning: Permission denied
+   - Common causes: Insufficient permissions, file owned by another user
+   - Solution: Check file permissions, run with proper privileges
+   Example: Trying to write to a read-only file
+
+3. EEXIST - Error file EXISTs
+   - Meaning: File already exists
+   - Common causes: Trying to create a file that already exists
+   - Solution: Check if file exists first, use different name, or overwrite
+   Example: Using fs.mkdir() when directory already exists
+
+4. EISDIR - Error IS DIRectory
+   - Meaning: Expected file but found directory
+   - Common causes: Trying to perform file operation on a directory
+   - Solution: Check if path is a directory, use correct operation
+   Example: Trying to read a directory as a file
+
+5. ENOTDIR - Error NOT DIRectory
+   - Meaning: Expected directory but found file
+   - Common causes: Trying to perform directory operation on a file
+   - Solution: Verify path is a directory
+   Example: Using readdir() on a file
+
+6. EMFILE - Error too Many open FILES
+   - Meaning: Too many open files in the system
+   - Common causes: Not closing file handles, resource leak
+   - Solution: Close files after use, increase system limits
+
+7. ENOSPC - Error NO SPaCe
+   - Meaning: No space left on device
+   - Common causes: Disk is full
+   - Solution: Free up disk space, check available storage
+
+8. EPERM - Error PERMission denied (operation not permitted)
+   - Meaning: Operation not permitted
+   - Common causes: Insufficient privileges for the operation
+   - Solution: Run with appropriate permissions
+
+HANDLING ERRORS IN CODE:
+
+Callback-based:
+```javascript
+fs.readFile('file.txt', 'utf8', (err, data) => {
+    if (err) {
+        switch (err.code) {
+            case 'ENOENT':
+                console.error('File not found');
+                break;
+            case 'EACCES':
+                console.error('Permission denied');
+                break;
+            default:
+                console.error('Error:', err.message);
+        }
+        return;
+    }
+    console.log(data);
+});
+```
+
+Promise-based:
+```javascript
+try {
+    const data = await fs.readFile('file.txt', 'utf8');
+    console.log(data);
+} catch (err) {
+    if (err.code === 'ENOENT') {
+        console.error('File does not exist');
+    } else {
+        console.error('Error:', err.message);
+    }
+}
+```
+
+
+5. How would you safely delete a directory with all its contents?
+------------------------------------------------------------------
+
+SAFE DIRECTORY DELETION METHODS:
+
+METHOD 1: Using fs.rm() with recursive option (Node.js 14.14.0+) - RECOMMENDED
+```javascript
+const fs = require('fs').promises;
+
+async function deleteDirectory(dirPath) {
+    try {
+        await fs.rm(dirPath, { 
+            recursive: true,  // Delete directory and all contents
+            force: true       // Ignore errors if directory doesn't exist
+        });
+        console.log('Directory deleted successfully');
+    } catch (err) {
+        console.error('Error deleting directory:', err.message);
+    }
+}
+```
+
+METHOD 2: Check if directory exists before deletion
+```javascript
+const fs = require('fs').promises;
+
+async function safeDeleteDirectory(dirPath) {
+    try {
+        // Check if directory exists
+        await fs.access(dirPath);
+        
+        // Delete directory and contents
+        await fs.rm(dirPath, { recursive: true, force: true });
+        console.log(`Deleted: ${dirPath}`);
+        
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            console.log('Directory does not exist');
+        } else {
+            console.error('Error:', err.message);
+        }
+    }
+}
+```
+
+METHOD 3: Manual recursive deletion (older approach)
+```javascript
+const fs = require('fs').promises;
+const path = require('path');
+
+async function deleteDirectoryRecursive(dirPath) {
+    try {
+        const entries = await fs.readdir(dirPath, { withFileTypes: true });
+        
+        // Delete all contents first
+        for (const entry of entries) {
+            const fullPath = path.join(dirPath, entry.name);
+            
+            if (entry.isDirectory()) {
+                // Recursively delete subdirectory
+                await deleteDirectoryRecursive(fullPath);
+            } else {
+                // Delete file
+                await fs.unlink(fullPath);
+            }
+        }
+        
+        // Finally, delete the empty directory
+        await fs.rmdir(dirPath);
+        console.log(`Deleted directory: ${dirPath}`);
+        
+    } catch (err) {
+        console.error('Error:', err.message);
+        throw err;
+    }
+}
+```
+
+SAFETY CONSIDERATIONS:
+
+1. CONFIRM BEFORE DELETION:
+```javascript
+async function safeDelete(dirPath) {
+    const readline = require('readline');
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+    
+    const answer = await new Promise(resolve => {
+        rl.question(`Delete ${dirPath} and all contents? (yes/no): `, resolve);
+    });
+    
+    rl.close();
+    
+    if (answer.toLowerCase() === 'yes') {
+        await fs.rm(dirPath, { recursive: true, force: true });
+        console.log('Deleted successfully');
+    } else {
+        console.log('Deletion cancelled');
+    }
+}
+```
+
+2. BACKUP BEFORE DELETION:
+```javascript
+async function deleteWithBackup(dirPath) {
+    const backupPath = dirPath + '_backup_' + Date.now();
+    
+    try {
+        // Create backup
+        await fs.cp(dirPath, backupPath, { recursive: true });
+        console.log(`Backup created: ${backupPath}`);
+        
+        // Delete original
+        await fs.rm(dirPath, { recursive: true, force: true });
+        console.log('Original deleted');
+        
+    } catch (err) {
+        console.error('Error:', err.message);
+    }
+}
+```
+
+3. VALIDATE PATH BEFORE DELETION:
+```javascript
+async function validateAndDelete(dirPath) {
+    // Prevent deletion of important directories
+    const dangerousPaths = ['/', '/home', '/usr', '/etc', '.'];
+    
+    if (dangerousPaths.includes(dirPath)) {
+        throw new Error('Cannot delete system directory');
+    }
+    
+    await fs.rm(dirPath, { recursive: true, force: true });
+}
+```
+
+BEST PRACTICES:
+- Always use try-catch for error handling
+- Validate the path before deletion
+- Consider user confirmation for important deletions
+- Use the 'force' option to handle non-existent directories gracefully
+- Test with non-critical directories first
+- Keep backups of important data
+
+
+6. Explain the concept of piping in streams with an example.
+-------------------------------------------------------------
+
+CONCEPT OF PIPING IN STREAMS:
+
+Piping is a mechanism that connects the output of one stream directly to the input of another stream. It automates the process of reading data from a source and writing it to a destination, handling backpressure and flow control automatically.
+
+KEY CONCEPTS:
+
+1. AUTOMATIC DATA TRANSFER:
+   - Data flows from readable stream to writable stream
+   - No manual reading and writing needed
+   - Handles data chunks automatically
+
+2. BACKPRESSURE HANDLING:
+   - If destination is slower than source, pipe() manages the flow
+   - Prevents memory overflow
+   - Pauses reading when write buffer is full
+
+3. ERROR HANDLING:
+   - Errors in piped streams need to be handled separately
+   - Use .on('error') for each stream
+
+4. CHAINING:
+   - Multiple streams can be piped together
+   - Example: read → transform → compress → write
+
+BASIC PIPING SYNTAX:
+```javascript
+readableStream.pipe(writableStream);
+```
+
+EXAMPLE 1: Simple File Copy
+```javascript
+const fs = require('fs');
+
+const readStream = fs.createReadStream('source.txt');
+const writeStream = fs.createWriteStream('destination.txt');
+
+// Pipe data from read to write stream
+readStream.pipe(writeStream);
+
+writeStream.on('finish', () => {
+    console.log('File copied successfully');
+});
+```
+
+EXAMPLE 2: File Copy with Progress
+```javascript
+const fs = require('fs');
+
+const readStream = fs.createReadStream('large-file.txt');
+const writeStream = fs.createWriteStream('copy.txt');
+
+let totalBytes = 0;
+
+readStream.on('data', (chunk) => {
+    totalBytes += chunk.length;
+    console.log(`Copied: ${totalBytes} bytes`);
+});
+
+readStream.pipe(writeStream);
+
+writeStream.on('finish', () => {
+    console.log(`Total bytes copied: ${totalBytes}`);
+});
+```
+
+EXAMPLE 3: Transform Stream (Uppercase Conversion)
+```javascript
+const fs = require('fs');
+const { Transform } = require('stream');
+
+// Create transform stream to convert to uppercase
+const upperCaseTransform = new Transform({
+    transform(chunk, encoding, callback) {
+        this.push(chunk.toString().toUpperCase());
+        callback();
+    }
+});
+
+// Pipe: read → transform → write
+fs.createReadStream('input.txt')
+    .pipe(upperCaseTransform)
+    .pipe(fs.createWriteStream('output.txt'));
+```
+
+EXAMPLE 4: Multiple Stream Chaining (Compression)
+```javascript
+const fs = require('fs');
+const zlib = require('zlib');
+
+// Chain multiple streams
+fs.createReadStream('input.txt')
+    .pipe(zlib.createGzip())  // Compress
+    .pipe(fs.createWriteStream('output.txt.gz'));
+
+console.log('File compression started...');
+```
+
+EXAMPLE 5: Complete Example with Error Handling
+```javascript
+const fs = require('fs');
+
+function copyFileWithProgress(source, destination) {
+    const readStream = fs.createReadStream(source);
+    const writeStream = fs.createWriteStream(destination);
+    
+    // Track progress
+    let bytesRead = 0;
+    
+    readStream.on('data', (chunk) => {
+        bytesRead += chunk.length;
+        console.log(`Progress: ${bytesRead} bytes`);
+    });
+    
+    // Pipe data
+    readStream.pipe(writeStream);
+    
+    // Handle completion
+    writeStream.on('finish', () => {
+        console.log('Copy completed successfully');
+    });
+    
+    // Handle errors
+    readStream.on('error', (err) => {
+        console.error('Read error:', err.message);
+    });
+    
+    writeStream.on('error', (err) => {
+        console.error('Write error:', err.message);
+    });
+}
+
+copyFileWithProgress('source.txt', 'destination.txt');
+```
+
+ADVANTAGES OF PIPING:
+- Memory efficient (processes data in chunks)
+- Automatic backpressure management
+- Cleaner, more readable code
+- Better performance for large files
+- Composable (can chain multiple operations)
+
+COMMON USE CASES:
+- File copying
+- File compression/decompression
+- Data transformation
+- HTTP responses
+- CSV processing
+- Log file processing
+
+
+7. Why is it important to handle errors in file operations?
+------------------------------------------------------------
+
+IMPORTANCE OF ERROR HANDLING IN FILE OPERATIONS:
+
+1. PREVENT APPLICATION CRASHES:
+   - Unhandled errors can crash your Node.js application
+   - File operations are prone to failures (missing files, permissions, disk space)
+   - Graceful error handling keeps the application running
+
+Example of crash without error handling:
+```javascript
+// BAD - Will crash if file doesn't exist
+const data = fs.readFileSync('nonexistent.txt'); // Throws error, crashes app
+console.log('This line never executes');
+```
+
+Example with error handling:
+```javascript
+// GOOD - Application continues running
+try {
+    const data = fs.readFileSync('nonexistent.txt');
+} catch (err) {
+    console.error('Error reading file:', err.message);
+    // Application continues...
+}
+console.log('This line executes');
+```
+
+2. USER EXPERIENCE:
+   - Provide meaningful error messages to users
+   - Guide users on how to fix issues
+   - Better than cryptic system errors
+
+```javascript
+fs.readFile('config.json', 'utf8', (err, data) => {
+    if (err) {
+        if (err.code === 'ENOENT') {
+            console.log('Configuration file not found. Creating default...');
+            // Create default config
+        } else if (err.code === 'EACCES') {
+            console.log('Permission denied. Please check file permissions.');
+        }
+        return;
+    }
+    // Process data
+});
+```
+
+3. DATA INTEGRITY:
+   - Prevent partial writes or corrupted data
+   - Ensure all-or-nothing operations
+   - Maintain consistency
+
+```javascript
+async function safeWrite(filepath, data) {
+    const tempFile = filepath + '.tmp';
+    
+    try {
+        // Write to temporary file first
+        await fs.writeFile(tempFile, data);
+        
+        // Rename (atomic operation)
+        await fs.rename(tempFile, filepath);
+        
+        console.log('File written successfully');
+    } catch (err) {
+        // Clean up temporary file
+        try {
+            await fs.unlink(tempFile);
+        } catch {}
+        
+        console.error('Error writing file:', err.message);
+        throw err;
+    }
+}
+```
+
+4. RESOURCE MANAGEMENT:
+   - Proper cleanup of file handles and streams
+   - Prevent resource leaks
+   - Free up system resources
+
+```javascript
+const stream = fs.createReadStream('file.txt');
+
+stream.on('data', (chunk) => {
+    // Process chunk
+});
+
+stream.on('error', (err) => {
+    console.error('Stream error:', err.message);
+    stream.destroy(); // Clean up
+});
+
+stream.on('end', () => {
+    console.log('Stream closed properly');
+});
+```
+
+5. DEBUGGING AND LOGGING:
+   - Log errors for troubleshooting
+   - Track issues in production
+   - Identify patterns and fix root causes
+
+```javascript
+const logger = require('./logger');
+
+async function processFile(filepath) {
+    try {
+        const data = await fs.readFile(filepath, 'utf8');
+        // Process data
+    } catch (err) {
+        logger.error({
+            message: 'File processing failed',
+            filepath,
+            error: err.message,
+            code: err.code,
+            timestamp: new Date()
+        });
+        throw err;
+    }
+}
+```
+
+6. SECURITY:
+   - Prevent information disclosure
+   - Avoid exposing system paths and details
+   - Handle permission errors safely
+
+```javascript
+app.get('/file/:filename', async (req, res) => {
+    try {
+        const data = await fs.readFile(`./files/${req.params.filename}`);
+        res.send(data);
+    } catch (err) {
+        // Don't expose system details
+        if (err.code === 'ENOENT') {
+            res.status(404).send('File not found');
+        } else {
+            res.status(500).send('Server error');
+        }
+        // Log full error internally
+        logger.error(err);
+    }
+});
+```
+
+7. TRANSACTION-LIKE BEHAVIOR:
+   - Rollback changes on failure
+   - Implement retry logic
+   - Maintain application state consistency
+
+```javascript
+async function processMultipleFiles(files) {
+    const processed = [];
+    
+    try {
+        for (const file of files) {
+            await processFile(file);
+            processed.push(file);
+        }
+    } catch (err) {
+        // Rollback processed files
+        console.error('Error processing files, rolling back...');
+        for (const file of processed) {
+            await rollbackFile(file);
+        }
+        throw err;
+    }
+}
+```
+
+BEST PRACTICES FOR ERROR HANDLING:
+
+1. Always use try-catch with async/await
+2. Check error.code for specific error types
+3. Provide meaningful error messages
+4. Log errors for debugging
+5. Clean up resources in finally blocks
+6. Don't expose sensitive information in error messages
+7. Implement retry logic for transient errors
+8. Use error boundaries to prevent complete app crashes
+
+CONCLUSION:
+Error handling in file operations is crucial for building robust, reliable, and user-friendly applications. It ensures your application can gracefully handle unexpected situations and continue operating even when file operations fail.
+
+
+8. What is the difference between writeFile and appendFile methods?
+--------------------------------------------------------------------
+
+WRITEFILE VS APPENDFILE COMPARISON:
+
+1. fs.writeFile():
+   - OVERWRITES the entire file with new content
+   - Creates the file if it doesn't exist
+   - If file exists, all previous content is LOST
+   - Best for: Creating new files, replacing content entirely
+
+2. fs.appendFile():
+   - ADDS content to the end of the file
+   - Creates the file if it doesn't exist
+   - If file exists, previous content is PRESERVED
+   - Best for: Logging, adding records, incremental updates
+
+EXAMPLES:
+
+Using writeFile (Overwrites):
+```javascript
+const fs = require('fs').promises;
+
+// First write
+await fs.writeFile('log.txt', 'Line 1\n');
+// File contains: "Line 1\n"
+
+// Second write - OVERWRITES EVERYTHING
+await fs.writeFile('log.txt', 'Line 2\n');
+// File now contains: "Line 2\n" (Line 1 is GONE!)
+```
+
+Using appendFile (Appends):
+```javascript
+const fs = require('fs').promises;
+
+// First write
+await fs.appendFile('log.txt', 'Line 1\n');
+// File contains: "Line 1\n"
+
+// Second write - ADDS to end
+await fs.appendFile('log.txt', 'Line 2\n');
+// File now contains: "Line 1\nLine 2\n" (Both lines preserved!)
+```
+
+DETAILED COMPARISON:
+
+Feature              | writeFile                 | appendFile
+---------------------|---------------------------|---------------------------
+Existing content     | Erased/Overwritten       | Preserved/Added to
+File creation        | Creates if not exists     | Creates if not exists
+Use case             | Replace entire file       | Add to existing file
+Common usage         | Config files, full rewrites| Logs, incremental data
+Performance          | Same                      | Same
+
+PRACTICAL EXAMPLES:
+
+Example 1: Configuration File (use writeFile)
+```javascript
+const fs = require('fs').promises;
+
+async function saveConfig(config) {
+    const configData = JSON.stringify(config, null, 2);
+    // Use writeFile - we want to replace entire config
+    await fs.writeFile('config.json', configData);
+}
+
+const config = {
+    port: 3000,
+    database: 'mongodb://localhost:27017'
+};
+
+await saveConfig(config);
+```
+
+Example 2: Logging System (use appendFile)
+```javascript
+const fs = require('fs').promises;
+
+async function log(message) {
+    const timestamp = new Date().toISOString();
+    const logEntry = `[${timestamp}] ${message}\n`;
+    
+    // Use appendFile - we want to add to existing logs
+    await fs.appendFile('application.log', logEntry);
+}
+
+await log('Application started');
+await log('User logged in');
+await log('Database connected');
+// All three entries are preserved in the file
+```
+
+Example 3: Demonstrating the Difference
+```javascript
+const fs = require('fs').promises;
+
+async function demonstrateDifference() {
+    // Clean start
+    try {
+        await fs.unlink('test.txt');
+    } catch {}
+    
+    console.log('=== Testing writeFile ===');
+    await fs.writeFile('test.txt', 'First line\n');
+    console.log('After first writeFile:', await fs.readFile('test.txt', 'utf8'));
+    
+    await fs.writeFile('test.txt', 'Second line\n');
+    console.log('After second writeFile:', await fs.readFile('test.txt', 'utf8'));
+    // Output: "Second line\n" (First line is gone!)
+    
+    console.log('\n=== Testing appendFile ===');
+    await fs.unlink('test.txt'); // Clean slate
+    
+    await fs.appendFile('test.txt', 'First line\n');
+    console.log('After first appendFile:', await fs.readFile('test.txt', 'utf8'));
+    
+    await fs.appendFile('test.txt', 'Second line\n');
+    console.log('After second appendFile:', await fs.readFile('test.txt', 'utf8'));
+    // Output: "First line\nSecond line\n" (Both preserved!)
+}
+
+demonstrateDifference();
+```
+
+WHEN TO USE EACH:
+
+USE writeFile():
+- Saving complete documents or configurations
+- Generating reports
+- Creating files from scratch
+- When you want to replace all content
+- Examples: JSON configs, HTML pages, complete documents
+
+USE appendFile():
+- Logging systems
+- Adding records to files
+- Incremental data updates
+- When you want to preserve existing content
+- Examples: Log files, CSV files (adding rows), audit trails
+
+COMBINING BOTH:
+```javascript
+// Initialize log file (writeFile)
+await fs.writeFile('app.log', '=== Log Started ===\n');
+
+// Add log entries (appendFile)
+await fs.appendFile('app.log', '[INFO] App initialized\n');
+await fs.appendFile('app.log', '[INFO] Database connected\n');
+await fs.appendFile('app.log', '[ERROR] Failed to load config\n');
+```
+
+PERFORMANCE NOTE:
+Both methods have similar performance characteristics. The choice between them should be based on whether you want to preserve or replace existing content, not performance.
+
+
+=================================================================
+END OF ASSESSMENT QUESTIONS ANSWERS
+=================================================================
