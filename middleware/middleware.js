@@ -59,7 +59,7 @@ const authenticate=(req,res,next)=>{
         return res.status(401).send("Token is required");
     }
     
-    if(token !="harshita"){
+    if(token !="sakshi"){
         return res.status(401).send("Invalid token");
     }
     
@@ -71,3 +71,4 @@ app.get("/profile",authenticate,(req,res)=>{
 });
 
 app.listen(8000,()=>console.log("Server started on port 8000"));
+ 
