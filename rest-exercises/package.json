@@ -1,0 +1,15 @@
+{
+  "name": "rest-exercises",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "ex1": "node exercise1_filter.js",
+    "ex2": "node exercise2_validation.js",
+    "ex3": "node exercise3_pagination.js",
+    "ex4": "node exercise4_authors.js",
+    "ex5": "node exercise5_search.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
