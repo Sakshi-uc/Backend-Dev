@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Contact Us</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 20px; }
+    input, textarea { width: 100%; padding: 8px; margin: 6px 0 14px 0; box-sizing: border-box; }
+    button { padding: 10px 20px; background: #333; color: white; border: none; cursor: pointer; }
+    .error { color: red; }
+    .success { background: #e0ffe0; padding: 15px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Contact Us</h1>
+
+  <% if (submitted) { %>
+    <div class="success">
+      <h3>Message received!</h3>
+      <p><strong>Name:</strong> <%= data.name %></p>
+      <p><strong>Email:</strong> <%= data.email %></p>
+      <p><strong>Message:</strong> <%= data.message %></p>
+      <a href="/contact">Send another message</a>
+    </div>
+  <% } else { %>
+    <% if (typeof error !== 'undefined' && error) { %>
+      <p class="error"><%= error %></p>
+    <% } %>
+
+    <form method="POST" action="/contact">
+      <label>Name</label>
+      <input type="text" name="name" placeholder="Your name" />
+
+      <label>Email</label>
+      <input type="email" name="email" placeholder="Your email" />
+
+      <label>Message</label>
+      <textarea name="message" rows="5" placeholder="Your message"></textarea>
+
+      <button type="submit">Send Message</button>
+    </form>
+  <% } %>
+</body>
+</html>

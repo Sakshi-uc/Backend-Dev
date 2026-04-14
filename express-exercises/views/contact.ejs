@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head><title>Contact</title></head>
+<body>
+  <h2>Contact Us</h2>
+
+  <% if (submitted) { %>
+    <p>Thanks <%= name %>, we got your message!</p>
+  <% } else { %>
+    <% if (error) { %><p style="color:red"><%= error %></p><% } %>
+    <form method="POST" action="/contact">
+      <input type="text" name="name" placeholder="Your name" /><br><br>
+      <input type="email" name="email" placeholder="Your email" /><br><br>
+      <textarea name="message" placeholder="Your message"></textarea><br><br>
+      <button type="submit">Send</button>
+    </form>
+  <% } %>
+</body>
+</html>

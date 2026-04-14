@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head><title>Gallery</title></head>
+<body>
+  <h2>Photo Gallery</h2>
+  <% photos.forEach(function(photo) { %>
+    <div>
+      <h3><%= photo.title %></h3>
+      <p><%= photo.description %></p>
+      <a href="/photo/<%= photo.id %>">View</a>
+    </div>
+    <hr>
+  <% }) %>
+</body>
+</html>

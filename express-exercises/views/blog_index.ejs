@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head><title>Blog</title></head>
+<body>
+  <h2>Blog Posts</h2>
+  <a href="/posts/new">+ New Post</a>
+  <hr>
+  <% posts.forEach(function(post) { %>
+    <h3><a href="/posts/<%= post.id %>"><%= post.title %></a></h3>
+    <p><%= post.body %></p>
+    <hr>
+  <% }) %>
+</body>
+</html>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head><title>New Post</title></head>
+<body>
+  <h2>Create New Post</h2>
+  <% if (error) { %><p style="color:red"><%= error %></p><% } %>
+  <form method="POST" action="/posts">
+    <input type="text" name="title" placeholder="Title" /><br><br>
+    <textarea name="body" placeholder="Write something..."></textarea><br><br>
+    <button type="submit">Post</button>
+  </form>
+  <br>
+  <a href="/">Cancel</a>
+</body>
+</html>
